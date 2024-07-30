@@ -1,35 +1,33 @@
 import speech_recognition as sr
-import pyttsx3
 from googletrans import Translator
+from gtts import gTTS
+from io import BytesIO
+import pygame
 
 r = sr.Recognizer()
 translator = Translator()
 
 def speak(text, lang="en"):
-    engine = pyttsx3.init()
+    tts = gTTS(text=text, lang=lang)
+    fp = BytesIO()
+    tts.write_to_fp(fp)
+    fp.seek(0)
 
-    # Voice config
-    rate = engine.getProperty('rate')
-    engine.setProperty('rate', 150)
+    pygame.mixer.init()
+    pygame.mixer.music.load(fp, 'mp3')
+    pygame.mixer.music.play()
 
-    volume = engine.getProperty('volume')
-    engine.setProperty('volume', 1.0)
-
-    voices = engine.getProperty('voices')
-    engine.setProperty('voice', voices[1].id)
-
-    # Saying text in configured voice
-    engine.say(text)
-    engine.runAndWait()
+    while pygame.mixer.music.get_busy():
+        pass
 
 while True:
     try:
         with sr.Microphone() as source:
-            r.adjust_for_ambient_noise(source, duration=0.5)
+            r.adjust_for_ambient_noise(source, duration=0.2)
             print("Listening...")
             audio = r.listen(source)
 
-            my_text = r.recognize_google_cloud(audio)
+            my_text = r.recognize_google(audio)
             my_text = my_text.lower()
 
             translated_text = translator.translate(my_text, dest='hi').text
